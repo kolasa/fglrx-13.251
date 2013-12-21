@@ -793,9 +793,13 @@ unsigned int ATI_API_CALL KCL_ACPI_GetHandles(kcl_match_info_t *pInfo)
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,12)
     #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
-        pInfo->video_handle = pInfo->pcidev->dev.acpi_node.handle;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,13,0)
+    pInfo->video_handle = pInfo->pcidev->dev.acpi_node.handle;
+#else
+    pInfo->video_handle = pInfo->pcidev->dev.acpi_node.companion;
+#endif
     #elif LINUX_VERSION_CODE > KERNEL_VERSION(2,6,19)
-        pInfo->video_handle = pInfo->pcidev->dev.archdata.acpi_handle;
+	pInfo->video_handle = pInfo->pcidev->dev.archdata.acpi_handle;
     #else 
         pInfo->video_handle = pInfo->pcidev->dev.firmware_data;
     #endif    
@@ -995,7 +999,11 @@ int ATI_API_CALL KCL_ACPI_ParseTable(char *id, KCL_ACPI_IntCallbackHandle handle
 #endif
     {
         return KCL_ACPI_ERROR;
-    }    
+    }
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,1)
+    ((acpi_tbl_table_handler)handler)(hdr);
+#else
     ((acpi_table_handler)handler)(hdr);
+#endif
     return KCL_ACPI_OK;
 }
